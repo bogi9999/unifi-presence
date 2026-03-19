@@ -1,3 +1,27 @@
+// Compare versions like "10.0.156" numerically (major.minor.patch).
+// Returns true if `actual` >= `minimum`.
+const isVersionAtLeast = (actual, minimum) => {
+  if (!actual || !minimum) return false;
+
+  const toParts = (v) =>
+    v.split('.').map((p) => {
+      const n = parseInt(p, 10);
+      return Number.isFinite(n) ? n : 0;
+    });
+
+  const a = toParts(actual);
+  const m = toParts(minimum);
+  const len = Math.max(a.length, m.length);
+
+  for (let i = 0; i < len; i++) {
+    const av = a[i] ?? 0;
+    const mv = m[i] ?? 0;
+    if (av > mv) return true;
+    if (av < mv) return false;
+  }
+  return true; // equal
+};
+
 const directories = require('../utils/directories')();
 const path = require('path');
 const fileHandler = require('../utils/fileHandler');
@@ -41,7 +65,7 @@ const saveConfig = requestUtils.unifiRequestWithError(config, async (req, res) =
 const getStats = (_) =>
   requestUtils.unifiRequestWithError(config, async (req, res) => {
     const { version, deviceType } = await uniFi.getSysinfo();
-    if (version < '6.4.54') {
+    if (!isVersionAtLeast(version, '6.4.54')) {
       return res.json({ version, versionError: true });
     }
     const health = await uniFi.health();
