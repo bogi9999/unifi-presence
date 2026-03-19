@@ -1,4 +1,7 @@
-#### 3.0.1 (2023-04-01)
+#### 3.0.2 (2026-03-19)
+**fix:** UniFi Controller version comparison for major versions >= 10 (fixes #18)
+
+## 3.0.1 (2023-04-01)
 
 **fix:** issue with losing connection after restart
 
