@@ -56,10 +56,36 @@ import { useStore } from 'vuex';
 import actionsStore from '../store/actions';
 import udm from '../assets/udm.png';
 import udmpro from '../assets/udmpro.png';
+
 export default {
   name: 'UnifiController',
   setup() {
     const store = useStore();
+
+    // Compare versions like "10.0.156" numerically (major.minor.patch).
+    // Returns true if `actual` >= `minimum`.
+    const isVersionAtLeast = (actual, minimum) => {
+      if (!actual || !minimum) return false;
+
+      const toParts = (v) =>
+        v.split('.').map((p) => {
+          const n = parseInt(p, 10);
+          return Number.isFinite(n) ? n : 0;
+        });
+
+      const a = toParts(actual);
+      const m = toParts(minimum);
+      const len = Math.max(a.length, m.length);
+
+      for (let i = 0; i < len; i++) {
+        const av = a[i] ?? 0;
+        const mv = m[i] ?? 0;
+        if (av > mv) return true;
+        if (av < mv) return false;
+      }
+      return true; // equal
+    };
+
     const config = computed(() => store.state.Settings.config);
     const isLoading = computed(() => store.state.Global.loading);
     const loginRequired = computed(() => store.state.Settings.loginRequired);
@@ -70,11 +96,12 @@ export default {
     const serviceStatus = computed(() => store.state.Settings.serviceStatus);
     const error = computed(() => store.state.Global.error);
     const connectionError = computed(() => store.state.Settings.connectionError);
+
     const connected = computed(() => {
       if (loginRequired.value || error.value || connectionError.value) {
         return false;
       }
-      if (version.value === null || version.value < '6.4.54') {
+      if (version.value === null || !isVersionAtLeast(version.value, '6.4.54')) {
         return false;
       }
       if (!config.value.username || !config.value.ipaddress || !config.value.password) {
@@ -94,8 +121,10 @@ export default {
       }
       return `${Math.floor(uptime / 60 / 60 / 24)}d`;
     };
+
     const ispUptime = computed(() => uptime(stats.value.www.uptime));
     const udmUptime = computed(() => uptime(stats.value.wan.stats.uptime));
+
     const restartLoading = ref(false);
     const restartService = async () => {
       restartLoading.value = true;
